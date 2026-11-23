@@ -1,0 +1,11 @@
+services:
+  source-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${SOURCE_DB}
+      POSTGRES_USER: ${SOURCE_ADMIN_USER}
+      POSTGRES_PASSWORD: ${SOURCE_ADMIN_PASSWORD}
+    ports:
+      - "${SOURCE_PORT}:5432"
+    volumes:
+      - ./Lethexa/data/synthetic.sql:/docker-entrypoint-initdb.d/01_synthetic.sql:ro
