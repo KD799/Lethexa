@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import psycopg
@@ -5,12 +6,27 @@ from psycopg import sql
 
 from .config import PostgresConfig
 from .models import (
-    ColumnInfo, ConnectionTestResult, ForeignKey,
+    ColumnInfo, ConnectionTestResult, ForeignKey, RowMatches,
     SampleResult, SchemaInfo, TableInfo,
 )
 
 MAX_SAMPLE_ROWS = 100
 
+MATCH_MODES = ("exact", "lower", "upper", "digits", "phone10")
+
+def _match_expression(column: str, mode: str) -> sql.Composable:
+    """Fixed SQL templates only. The identifier value is always a bound parameter."""
+    text = sql.SQL("CAST({} AS text)").format(sql.Identifier(column))
+    if mode == "exact":
+        return text
+    if mode == "lower":
+        return sql.SQL("lower({})").format(text)
+    if mode == "upper":
+        return sql.SQL("upper({})").format(text)
+    digits = sql.SQL("regexp_replace({}, '[^0-9]', '', 'g')").format(text)
+    if mode == "digits":
+        return digits
+    return sql.SQL("right({}, 10)").format(digits)  # phone10: last 10 digits
 
 class PostgresConnector:
     """Read-only PostgreSQL connector: test, schema, sample rows."""
@@ -99,12 +115,13 @@ class PostgresConnector:
         pk = {
             (t, c) for t, c in conn.execute(
                 """
-                SELECT kcu.table_name, kcu.column_name
-                FROM information_schema.table_constraints tc
-                JOIN information_schema.key_column_usage kcu
-                  ON tc.constraint_name = kcu.constraint_name
-                 AND tc.table_schema = kcu.table_schema
-                WHERE tc.constraint_type = 'PRIMARY KEY' AND tc.table_schema = %s
+                SELECT cl.relname, a.attname
+                FROM pg_constraint c
+                JOIN pg_class cl ON cl.oid = c.conrelid
+                JOIN pg_namespace n ON n.oid = cl.relnamespace
+                CROSS JOIN LATERAL unnest(c.conkey) AS k(attnum)
+                JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
+                WHERE c.contype = 'p' AND n.nspname = %s
                 """,
                 (schema,),
             ).fetchall()
@@ -183,3 +200,67 @@ class PostgresConnector:
             cols = [d.name for d in cur.description]
             rows = cur.fetchall()
         return SampleResult(table=table, columns=cols, rows=rows)
+        # ---------- locate: find rows for one identifier ----------
+    def _primary_key_columns(self, schema: str, table: str) -> list[str]:
+        rows = self._require_conn().execute(
+            """
+            SELECT a.attname
+            FROM pg_constraint c
+            JOIN pg_class cl ON cl.oid = c.conrelid
+            JOIN pg_namespace n ON n.oid = cl.relnamespace
+            CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord)
+            JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
+            WHERE c.contype = 'p' AND n.nspname = %s AND cl.relname = %s
+            ORDER BY k.ord
+            """,
+            (schema, table),
+        ).fetchall()
+        return [r[0] for r in rows]
+
+    def find_rows(
+        self, table: str, column: str, value: str,
+        mode: str = "exact", limit: int = 20, schema: str = "public",
+    ) -> RowMatches:
+        """Count rows where `column` equals `value` (after `mode` normalisation).
+
+        Returns the count and the primary keys of up to `limit` rows. The value
+        is a bound parameter and is never returned, logged or put in an error.
+        """
+        if mode not in MATCH_MODES:
+            raise ValueError("Unknown match mode")
+        limit = max(1, min(int(limit), MAX_SAMPLE_ROWS))
+        conn = self._require_conn()
+
+        exists = conn.execute(
+            """
+            SELECT 1 FROM information_schema.columns c
+            JOIN information_schema.tables t
+              ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+            WHERE c.table_schema = %s AND c.table_name = %s AND c.column_name = %s
+              AND t.table_type = 'BASE TABLE'
+            """,
+            (schema, table, column),
+        ).fetchone()
+        if not exists:
+            raise ValueError(f"Unknown column: {schema}.{table}.{column}")
+
+        key_columns = self._primary_key_columns(schema, table)
+        target = sql.SQL("{}.{}").format(sql.Identifier(schema), sql.Identifier(table))
+        expr = _match_expression(column, mode)
+
+        count = conn.execute(
+            sql.SQL("SELECT count(*) FROM {} WHERE {} = %s").format(target, expr),
+            (value,),
+        ).fetchone()[0]
+
+        keys: list[tuple] = []
+        if count and key_columns:
+            key_list = sql.SQL(", ").join(sql.Identifier(c) for c in key_columns)
+            rows = conn.execute(
+                sql.SQL("SELECT {} FROM {} WHERE {} = %s ORDER BY {} LIMIT {}").format(
+                    key_list, target, expr, key_list, sql.Literal(limit)
+                ),
+                (value,),
+            ).fetchall()
+            keys = [tuple(r) for r in rows]
+        return RowMatches(table, column, int(count), key_columns, keys)
