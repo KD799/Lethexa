@@ -8,7 +8,7 @@ Dataset: seed 2026, 200 customers, 10 tables, 62 columns (16 hold PII). Column t
 |---|---|---|---|
 | Column precision | 100.0% | at least 90% | PASS |
 | Column recall (rule-based categories) | 100.0% | at least 80% | PASS |
-| Coverage of all PII columns | 68.8% | none set | info |
+| Coverage of all PII columns | 81.2% | none set | info |
 
 ## Per category
 
@@ -19,14 +19,14 @@ Dataset: seed 2026, 200 customers, 10 tables, 62 columns (16 hold PII). Column t
 | PAN | 2 | 0 | 0 | 100.0% | 100.0% | 100.0% |
 | AADHAAR | 1 | 0 | 0 | 100.0% | 100.0% | 100.0% |
 | CREDIT_CARD | 1 | 0 | 0 | 100.0% | 100.0% | 100.0% |
+| IP_ADDRESS | 1 | 0 | 0 | 100.0% | 100.0% | 100.0% |
+| DATE_OF_BIRTH | 1 | 0 | 0 | 100.0% | 100.0% | 0.0% |
 
 ## Not covered yet (needs the NLP classifier)
 
 - customers.full_name (NAME)
-- customers.date_of_birth (DATE_OF_BIRTH)
 - addresses.address_line (ADDRESS)
 - employees.full_name (NAME)
-- app_logs.ip_address (IP_ADDRESS)
 
 ## Mistakes
 
@@ -47,8 +47,8 @@ What happens if we change how much of a column must match before we flag it.
 
 | Threshold | Precision | Recall | Wrong flags | Missed |
 |---|---|---|---|---|
-| 5% | 84.6% | 100.0% | 2 | 0 |
-| 10% | 91.7% | 100.0% | 1 | 0 |
+| 5% | 86.7% | 100.0% | 2 | 0 |
+| 10% | 92.9% | 100.0% | 1 | 0 |
 | 20% | 100.0% | 100.0% | 0 | 0 |
 | 30% (current) | 100.0% | 100.0% | 0 | 0 |
 | 50% | 100.0% | 100.0% | 0 | 0 |

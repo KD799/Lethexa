@@ -4,7 +4,7 @@ from pathlib import Path
 from scanner.scan import scan_database
 
 LABELS = Path(__file__).resolve().parents[2] / "data" / "labels.json"
-DETECTED = {"EMAIL", "PHONE", "PAN", "AADHAAR", "CREDIT_CARD"}
+DETECTED = {"EMAIL", "PHONE", "PAN", "AADHAAR", "CREDIT_CARD", "IP_ADDRESS", "DATE_OF_BIRTH"}
 
 
 def _expected() -> set[tuple[str, str]]:

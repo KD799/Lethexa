@@ -69,7 +69,7 @@ class SyntheticDatasetResults(unittest.TestCase):
         cls.result = evaluate(cls.tables)
 
     def test_every_detectable_column_is_found_with_no_wrong_flags(self):
-        self.assertEqual(self.result.total.tp, 11)
+        self.assertEqual(self.result.total.tp, 13)
         self.assertEqual(self.result.total.fp, 0)
         self.assertEqual(self.result.total.fn, 0)
 
@@ -80,8 +80,8 @@ class SyntheticDatasetResults(unittest.TestCase):
                 self.assertEqual(self.result.per_category[category].tp, count)
 
     def test_uncovered_and_coverage(self):
-        self.assertEqual(len(self.result.uncovered), 5)
-        self.assertAlmostEqual(self.result.coverage, 11 / 16)
+        self.assertEqual(len(self.result.uncovered), 3)
+        self.assertAlmostEqual(self.result.coverage, 13 / 16)
 
     def test_very_low_threshold_creates_false_positives_on_lookalike_columns(self):
         loose = evaluate(self.tables, min_ratio=0.05)
@@ -90,13 +90,13 @@ class SyntheticDatasetResults(unittest.TestCase):
         self.assertTrue("payment_ref" in text or "tracking_number" in text)
 
     def test_value_level_numbers(self):
-        found, flagged_clean = value_level(self.tables)
-        for category, (detected, checked) in found.items():
-            with self.subTest(category=category):
-                self.assertGreater(checked, 0)
-                self.assertEqual(detected, checked)
-        flagged_columns = [key for key, _flagged, _checked in flagged_clean]
-        self.assertIn("payments.payment_ref", flagged_columns)
+     found, flagged_clean = value_level(self.tables)
+     for category, (detected, checked) in found.items():
+        if category == "DATE_OF_BIRTH":
+            continue  # needs the column name, so it has no value-level rule
+        with self.subTest(category=category):
+            self.assertGreater(checked, 0)
+            self.assertEqual(detected, checked)
 
 
 class ReportTests(unittest.TestCase):

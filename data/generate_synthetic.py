@@ -32,8 +32,8 @@ DEFAULT_CUSTOMERS = 200
 
 # Labels. DETECTABLE ones are what our rule-based detectors can find today.
 # OTHER_PII are real personal data that need the NLP classifier (stretch goal).
-DETECTABLE = ("EMAIL", "PHONE", "PAN", "AADHAAR", "CREDIT_CARD")
-OTHER_PII = ("NAME", "ADDRESS", "DATE_OF_BIRTH", "IP_ADDRESS")
+DETECTABLE = ("EMAIL", "PHONE", "PAN", "AADHAAR", "CREDIT_CARD", "IP_ADDRESS", "DATE_OF_BIRTH")
+OTHER_PII = ("NAME", "ADDRESS")
 ALL_LABELS = DETECTABLE + OTHER_PII + ("NONE",)
 
 START = date(2023, 1, 1)

@@ -8,11 +8,11 @@ are (confidence), and WHY (reason).
 Important: this module never stores or logs the value itself. Reasons describe
 the rule that fired, not the data.
 
-Categories: EMAIL, PHONE, PAN, AADHAAR, CREDIT_CARD
+Categories: EMAIL, PHONE, PAN, AADHAAR, CREDIT_CARD, IP_ADDRESS
 """
 
 from __future__ import annotations
-
+import ipaddress
 import re
 from dataclasses import dataclass
 
@@ -148,6 +148,14 @@ def detect_credit_card(text: str) -> Match | None:
             return Match("CREDIT_CARD", 0.85, "13-19 digits that pass the Luhn checksum")
     return None
 
+def detect_ip_address(text: str) -> Match | None:
+    if "." not in text and ":" not in text:
+        return None
+    try:
+        address = ipaddress.ip_address(text)
+    except ValueError:
+        return None
+    return Match("IP_ADDRESS", 0.90, f"valid IPv{address.version} address")
 
 _DETECTORS = (
     detect_email,
@@ -155,6 +163,7 @@ _DETECTORS = (
     detect_pan,
     detect_aadhaar,
     detect_credit_card,
+    detect_ip_address,
 )
 
 
