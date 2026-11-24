@@ -20,7 +20,7 @@ Dataset: seed 2026, 200 customers, 10 tables, 62 columns (16 hold PII). Column t
 | AADHAAR | 1 | 0 | 0 | 100.0% | 100.0% | 100.0% |
 | CREDIT_CARD | 1 | 0 | 0 | 100.0% | 100.0% | 100.0% |
 | IP_ADDRESS | 1 | 0 | 0 | 100.0% | 100.0% | 100.0% |
-| DATE_OF_BIRTH | 1 | 0 | 0 | 100.0% | 100.0% | 0.0% |
+| DATE_OF_BIRTH | 1 | 0 | 0 | 100.0% | 100.0% | n/a (needs column name) |
 
 ## Not covered yet (needs the NLP classifier)
 
