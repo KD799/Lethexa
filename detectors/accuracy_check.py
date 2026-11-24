@@ -192,7 +192,10 @@ def build_report(seed: int = DEFAULT_SEED, n_customers: int = DEFAULT_CUSTOMERS,
     for category in DETECTABLE:
         c = result.per_category[category]
         detected, checked = found[category]
-        value_share = _pct(detected / checked) if checked else "n/a"
+        if category == "DATE_OF_BIRTH":
+            value_share = "n/a (needs column name)"
+        else:
+            value_share = _pct(detected / checked) if checked else "n/a"
         lines.append(
             f"| {category} | {c.tp} | {c.fn} | {c.fp} | {_pct(c.precision)} | {_pct(c.recall)} | {value_share} |"
         )
