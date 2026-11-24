@@ -1,3 +1,4 @@
+from datetime import datetime
 from dataclasses import dataclass, field
 
 
@@ -50,3 +51,18 @@ class SampleResult:
     def column_values(self, column: str) -> list:
         idx = self.columns.index(column)
         return [row[idx] for row in self.rows]
+@dataclass(frozen=True)
+class RowMatches:
+    """Where one identifier matched in one column. Counts and row keys only, never the values."""
+    table: str
+    column: str
+    match_count: int
+    key_columns: list[str]
+    keys: list[tuple] = field(repr=False)  # primary-key values of up to `limit` matching rows
+
+
+@dataclass(frozen=True)
+class ObjectInfo:
+    key: str
+    size: int
+    last_modified: datetime | None = None

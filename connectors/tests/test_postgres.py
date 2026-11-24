@@ -41,3 +41,21 @@ def test_writes_are_blocked(db):
     conn = db._require_conn()
     with pytest.raises(psycopg.Error):
         conn.execute(f'DELETE FROM public."{table}" WHERE false')
+def test_primary_keys_are_visible_to_read_only_user(db):
+    customers = next(t for t in db.get_schema().tables if t.name == "customers")
+    assert "customer_id" in [c.name for c in customers.columns if c.is_primary_key]
+
+
+def test_find_rows_rejects_unknown_column(db):
+    with pytest.raises(ValueError):
+        db.find_rows("customers", "no_such_column", "x")
+
+
+def test_find_rows_rejects_injection_style_column(db):
+    with pytest.raises(ValueError):
+        db.find_rows("customers", 'email"; DROP TABLE customers;--', "x")
+
+
+def test_find_rows_rejects_unknown_mode(db):
+    with pytest.raises(ValueError):
+        db.find_rows("customers", "email", "x", mode="regex")

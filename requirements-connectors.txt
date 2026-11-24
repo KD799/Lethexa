@@ -1,4 +1,8 @@
-﻿psycopg==3.3.9
+﻿boto3==1.44.10
+botocore==1.44.10
+moto==5.2.6
+psycopg==3.3.9
 psycopg-binary==3.3.9
 pytest==9.2.0
 python-dotenv==1.2.4
+s3transfer==0.19.3
