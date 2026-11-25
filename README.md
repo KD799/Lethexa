@@ -33,6 +33,5 @@ Expected on the synthetic data: 10 tables, 62 columns scanned, 11 PII columns fl
 
 ### Known limits
 - Only the `public` schema. Samples are the first N rows, not random. Row counts come from Postgres statistics (run `ANALYZE` if they show zero).
-- The S3 connector is not built yet (stretch).
 - S3 supports CSV, JSON and JSONL files only (no free text). Read-only cannot be proven from the client, so use an IAM user with `s3:ListBucket` and `s3:GetObject` only. S3 has been tested against a mock S3, not real AWS.
 - `python -m scanner.locate <identifier>` finds which flagged columns hold one person's data (Postgres only).
