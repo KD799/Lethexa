@@ -1,7 +1,7 @@
 """Create the read-only scanning user on the test source database.
 
 Run once after `docker compose up -d`:
-    python -m Lethexa.connectors.setup_readonly
+    python -m connectors.setup_readonly
 """
 import os
 

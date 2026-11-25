@@ -8,4 +8,4 @@ services:
     ports:
       - "${SOURCE_PORT}:5432"
     volumes:
-      - ./Lethexa/data/synthetic.sql:/docker-entrypoint-initdb.d/01_synthetic.sql:ro
+      - ./data/synthetic.sql:/docker-entrypoint-initdb.d/01_synthetic.sql:ro
